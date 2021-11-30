@@ -1,7 +1,6 @@
 #step 1 : setting environment
 library("ggplot2")
 library("data.table")
-library("rrBLUP")
 #step 2 : loading data
 genotypes.vcf <- fread("genotypes.vcf", header = F, data.table = F, na.string = ".")
 phenotypes.txt <- fread("phenotypes.txt", header = T, data.table = F)
@@ -69,5 +68,7 @@ geno.for.gwas <- geno.for.gwas[-1,]
 geno.for.gwas$`#CHROM` <- genotypes.vcf$V3[2:25001]
 geno.for.gwas$POS <- genotypes.vcf$V1[2:25001]
 geno.for.gwas$ID <- genotypes.vcf$V2[2:25001]
-geno.for.gwas[geno.for.gwas == "0/0"] = 0]
-gwas <- GWAS(phenotypes.txt, geno.for.gwas)
+geno.for.gwas[geno.for.gwas == "0/0"] = -1
+geno.for.gwas[geno.for.gwas == "0/1"] = 0
+geno.for.gwas[geno.for.gwas == "1/1"] = 1
+ggplot(geno.for.gwas ,aes(x=geno.for.gwas$POS,y=geno.for.gwas$ID)) + geom_point()
