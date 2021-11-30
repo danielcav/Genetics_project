@@ -18,3 +18,7 @@ ggplot(data = call.rate, mapping=aes(x=call.rate)) + geom_histogram()
 #How many variants are removed ? 
 print(paste("We've removed :", 25000-length(variants.clean),"variants"))
 #3. SNP-level filtering: minor allele frequency.
+counted <- apply(genotypes.clean, 1, function(x) (min(table(x))/sum(!is.na(x))))
+cou<-as.data.frame(counted)
+head(cou)
+ggplot(data = cou, mapping=aes(x=counted)) + geom_histogram()
