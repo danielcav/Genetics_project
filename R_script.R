@@ -24,7 +24,29 @@ print(paste("We've removed :", 25000-length(counted.clean),"variants"))
 cou<-as.data.frame(counted)
 ggplot(data = cou, mapping=aes(x=counted)) + geom_histogram(binwidth = 0.011)
 #3 Genome Wide Association Studies.
+covariates.txt$gender <- as.factor(covariates.txt$gender)
 linmodel <- merge(phenotypes.txt, covariates.txt)
 summary(lm("Cholesterol ~ gender", data=linmodel))
 r_squared <- summary(lm("Cholesterol ~ gender", data=linmodel))$r.squared
 print("Since the R-squared is close to 0, we can assume that there is no obvious relation between the gender and the cholesterol level")
+#Boxplot
+ggplot(data = linmodel, mapping=aes(y=Cholesterol,x=gender)) + geom_boxplot()
+ggplot(linmodel, aes(Cholesterol)) + geom_density(aes(col = 'all')) + geom_density(aes(col = gender)) + geom_density()
+print("No because the distribution is homogenous to a normal distribution, which is random")
+#1 = alt, 0 = ref
+data.for.pca = t(genotypes.clean)
+colnames(data.for.pca) = genotypes.vcf$V3[2:25001]
+data.for.pca[data.for.pca == "0/0"] = 0
+data.for.pca[data.for.pca == "0/1"] = 1
+data.for.pca[data.for.pca == "1/1"] = 2
+data.for.pca[is.na(data.for.pca)] <- 3
+str(data.for.pca)
+storage.mode(data.for.pca) <- "numeric"
+str(data.for.pca)
+data.pca = prcomp(data.for.pca, center = T)
+#data.plot = data.pca$x
+#plot(data.plot[,1], data.plot[,2])
+
+df <- data.frame(data.pca$x)
+ggplot(df,aes(x=PC1,y=PC2)) + geom_point()
+
