@@ -17,8 +17,14 @@ call.rate$idx = 1:25000
 ggplot(data = call.rate, mapping=aes(x=call.rate)) + geom_histogram()
 #How many variants are removed ? 
 print(paste("We've removed :", 25000-length(variants.clean),"variants"))
-#3. SNP-level filtering: minor allele frequency.
+#SNP-level filtering: minor allele frequency.
 counted <- apply(genotypes.clean, 1, function(x) (min(table(x))/sum(!is.na(x))))
+counted.clean = counted[counted > 0.01]
+print(paste("We've removed :", 25000-length(counted.clean),"variants"))
 cou<-as.data.frame(counted)
-head(cou)
-ggplot(data = cou, mapping=aes(x=counted)) + geom_histogram()
+ggplot(data = cou, mapping=aes(x=counted)) + geom_histogram(binwidth = 0.011)
+#3 Genome Wide Association Studies.
+linmodel <- merge(phenotypes.txt, covariates.txt)
+summary(lm("Cholesterol ~ gender", data=linmodel))
+r_squared <- summary(lm("Cholesterol ~ gender", data=linmodel))$r.squared
+print("Since the R-squared is close to 0, we can assume that there is no obvious relation between the gender and the cholesterol level")
