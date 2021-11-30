@@ -1,6 +1,7 @@
 #step 1 : setting environment
 library("ggplot2")
 library("data.table")
+library("rrBLUP")
 #step 2 : loading data
 genotypes.vcf <- fread("genotypes.vcf", header = F, data.table = F, na.string = ".")
 phenotypes.txt <- fread("phenotypes.txt", header = T, data.table = F)
@@ -18,11 +19,23 @@ ggplot(data = call.rate, mapping=aes(x=call.rate)) + geom_histogram()
 #How many variants are removed ? 
 print(paste("We've removed :", 25000-length(variants.clean),"variants"))
 #SNP-level filtering: minor allele frequency.
-counted <- apply(genotypes.clean, 1, function(x) (min(table(x))/sum(!is.na(x))))
+sum(!is.na(genotypes.clean[1,]))
+minors <- function (x){
+  one.one = length(which(x == "1/1"))
+  one.zero = length(which(x == "0/1"))
+  zero.zero = length(which(x== "0/0"))
+  nb.zero = zero.zero*2 + one.zero
+  nb.one = one.one*2 + one.zero
+  if(nb.zero == 0){return(1)}
+  if (nb.zero<nb.one){
+    return((nb.zero)/(2*sum(!is.na(x))))
+  }else{return(nb.ones/(2*sum(!is.na(x))))}
+}
+counted <- apply(genotypes.clean, 1, function(x) (minors(x)))
 counted.clean = counted[counted > 0.01]
 print(paste("We've removed :", 25000-length(counted.clean),"variants"))
 cou<-as.data.frame(counted)
-ggplot(data = cou, mapping=aes(x=counted)) + geom_histogram(binwidth = 0.011)
+ggplot(data = cou, mapping=aes(x=counted)) + geom_histogram(binwidth = 0.01)
 #3 Genome Wide Association Studies.
 covariates.txt$gender <- as.factor(covariates.txt$gender)
 linmodel <- merge(phenotypes.txt, covariates.txt)
@@ -49,4 +62,12 @@ data.pca = prcomp(data.for.pca, center = T)
 
 df <- data.frame(data.pca$x)
 ggplot(df,aes(x=PC1,y=PC2)) + geom_point()
-
+#GWAS:
+geno.for.gwas <- genotypes.vcf[,-c(4:9)]
+colnames(geno.for.gwas) = geno.for.gwas[1,]
+geno.for.gwas <- geno.for.gwas[-1,]
+geno.for.gwas$`#CHROM` <- genotypes.vcf$V3[2:25001]
+geno.for.gwas$POS <- genotypes.vcf$V1[2:25001]
+geno.for.gwas$ID <- genotypes.vcf$V2[2:25001]
+geno.for.gwas[geno.for.gwas == "0/0"] = 0]
+gwas <- GWAS(phenotypes.txt, geno.for.gwas)
