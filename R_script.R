@@ -62,13 +62,27 @@ data.pca = prcomp(data.for.pca, center = T)
 df <- data.frame(data.pca$x)
 ggplot(df,aes(x=PC1,y=PC2)) + geom_point()
 #GWAS:
-geno.for.gwas <- genotypes.vcf[,-c(4:9)]
-colnames(geno.for.gwas) = geno.for.gwas[1,]
-geno.for.gwas <- geno.for.gwas[-1,]
-geno.for.gwas$`#CHROM` <- genotypes.vcf$V3[2:25001]
-geno.for.gwas$POS <- genotypes.vcf$V1[2:25001]
-geno.for.gwas$ID <- genotypes.vcf$V2[2:25001]
-geno.for.gwas[geno.for.gwas == "0/0"] = -1
-geno.for.gwas[geno.for.gwas == "0/1"] = 0
-geno.for.gwas[geno.for.gwas == "1/1"] = 1
-ggplot(geno.for.gwas ,aes(x=geno.for.gwas$POS,y=geno.for.gwas$ID)) + geom_point()
+#On enlève tous les éléments où y a pas de variations:
+data.for.gwas <- apply(genotypes.clean, 1, function(x) minors(x) != 1)
+#la le probleme cest que c'est que des true/false et pas directement 
+#les lignes de genotype.clean
+#La j'ajoute le nom des colonnes
+colnames(genotypes.clean) <- genotypes.vcf[1, 10:ncol(genotypes.vcf)]
+#la je crée un fichier clean juste avec les valeurs du cholesterol
+#et je donne un nom explicite aux lignes/colonnes
+phenotypes.clean <- as.data.frame(phenotypes.txt$Cholesterol)
+colnames(phenotypes.clean) <- "Phenotype"
+rownames(phenotypes.clean) <- phenotypes.txt$sample_id
+#a partir de la c'est le bad
+#j'ai essayé de faire une fonction "model" qui va merge les lignes 
+#et qui applique la fonction lm()
+#elle marche pas encore parce que faut mettre un truc dans lm("")
+#mais le merge en soit marche bien
+apply(genotypes.clean, 1, function(x) if(data.for.gwas[rownames(x)]){return(summary(lm("Phenotype ~ Variant", data = c)))})
+model <- function(x){
+  a <- t(x)
+  b <- phenotypes.clean
+  c <- cbind(a,b)
+  lm("" ,data = c)
+}
+data.for.gwas <- apply(genotypes.clean, 1, function(x) summary(lm(data = cbind(x, phenotypes.clean))))
