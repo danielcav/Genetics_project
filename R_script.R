@@ -92,4 +92,7 @@ gwas.cov.t$color[gwas.cov.t$V1 > treshold] = "significant"
 ggplot(as.data.frame(gwas.cov.t),aes(x=V2, y=gwas.cov, col = factor(color))) + geom_point() + geom_hline(yintercept=treshold, linetype="dashed", color = "red")
 #7
 #8:Bonus
-#Vincent 
+generated.p.values <- sort(-log10(ppoints(nrow(gwas.cov.t))))
+expected.p.values <- sort(gwas.cov.t$gwas.cov)
+qq.data <- cbind(generated.p.values, expected.p.values)
+ggplot(as.data.frame(qq.data), aes(x=expected.p.values,y=generated.p.values)) + geom_point() + geom_abline()
