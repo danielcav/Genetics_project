@@ -75,3 +75,21 @@ data.gwas.t$color[(data.gwas.t$V4 %% 2) != 0] = "even"
 data.gwas.t$color[data.gwas.t$V2 > treshold] = "significant"
 ggplot(as.data.frame(data.gwas.t),aes(x=V3, y=V2, col = factor(color))) + geom_point() + geom_hline(yintercept=treshold, linetype="dashed", color = "red")
 #6
+p_value <- function(x){
+  temp <- summary(lm(phenotypes.txt$Cholesterol ~ as.numeric(x) + df[,1:10]))
+  p.val <- pf(temp$fstatistic[1], temp$fstatistic[2], temp$fstatistic[3], 
+              lower.tail = FALSE)
+  return(-log10(p.val))
+}
+gwas.cov <- apply(data.for.gwas, 1, function(x) p_value(x))
+as.vector(gwas.cov)
+gwas.cov<- rbind(gwas.cov,c(1:length(gwas.cov)))
+gwas.cov <- rbind(gwas.cov,as.numeric(chr.pos))
+gwas.cov.t <- as.data.frame(t(gwas.cov))
+gwas.cov.t$color[(gwas.cov.t$V3 %% 2) == 0] = "odd"
+gwas.cov.t$color[(gwas.cov.t$V3 %% 2) != 0] = "even"
+gwas.cov.t$color[gwas.cov.t$V1 > treshold] = "significant"
+ggplot(as.data.frame(gwas.cov.t),aes(x=V2, y=gwas.cov, col = factor(color))) + geom_point() + geom_hline(yintercept=treshold, linetype="dashed", color = "red")
+#7
+#8:Bonus
+#Vincent 
