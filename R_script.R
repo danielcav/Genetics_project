@@ -127,7 +127,10 @@ ggplot(as.data.frame(gwas.cov.t),aes(x=V3, y=V2, col = factor(color))) + geom_po
 print("We see that the GWAS with covariates have less significant values (3 vs 4 without covariates).")
 
 #Bonus: QQ plot.
+#Generate the expected values .
 generated.p.values <- sort(-log10(ppoints(nrow(gwas.cov.t))))
-expected.p.values <- sort(gwas.cov.t$V2)
-qq.data <- cbind(generated.p.values, expected.p.values)
-ggplot(as.data.frame(qq.data), aes(x=expected.p.values,y=generated.p.values)) + geom_point() + geom_abline() + ggtitle("QQ-plot") + xlab("Expected values (-log10 scale)") + ylab("Generated values (-log10 scale)")
+#Observed p-values with covariates.
+observed.p.values <- sort(gwas.cov.t$V2)
+qq.data <- cbind(generated.p.values, observed.p.values)
+#QQ plot.
+ggplot(as.data.frame(qq.data), aes(x=observed.p.values,y=generated.p.values)) + geom_point() + geom_abline() + ggtitle("QQ-plot") + xlab("Observed values (-log10 scale)") + ylab("Generated values (-log10 scale)")
