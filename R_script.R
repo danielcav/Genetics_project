@@ -104,33 +104,30 @@ data.gwas.t$color[(data.gwas.t$V4 %% 2) != 0] = "even"
 data.gwas.t$color[data.gwas.t$V2 > threshold] = "significant" #Bonus
 
 #Manhattan plot
-ggplot(as.data.frame(data.gwas.t),aes(x=V3, y=V2, col = factor(color))) + geom_point() + geom_hline(yintercept=threshold, linetype="dashed", color = "red") + ggtitle("Manhattan plot") + xlab("Chromosome position") + theme(axis.text.x=element_blank(),axis.ticks.x=element_blank(),legend.position = "None") + ylab("-log10(p-value)")
+ggplot(as.data.frame(data.gwas.t),aes(x=V3, y=V2, col = factor(color))) + geom_point() + geom_hline(yintercept=threshold, linetype="dashed", color = "red") + ggtitle("Manhattan plot without covariates") + xlab("Chromosome position") + theme(axis.text.x=element_blank(),axis.ticks.x=element_blank(),legend.position = "None") + ylab("-log10(p-value)")
 
 #Repeat the GWAS and Manhattan plot considering top 10 principal components as covariates.
 #Extracting the p-value
-p_value <- function(x){
+beta_p_cov <- function(x){
   temp <- summary(lm(phenotypes.txt$Cholesterol ~ as.numeric(x) + df[,1:10]))
-  p.val <- pf(temp$fstatistic[1], temp$fstatistic[2], temp$fstatistic[3], 
-              lower.tail = FALSE)
-  return(-log10(p.val))
+  return(c(temp$coefficients[2,1],-log10(temp$coefficients[2,4])))
 }
 #Create the data for the GWAS.
-gwas.cov <- apply(data.for.gwas, 1, function(x) p_value(x))
-gwas.cov <- as.vector(gwas.cov)
+gwas.cov <- apply(data.for.gwas, 1, function(x) beta_p_cov(x))
 #Rank of SNPs
-gwas.cov <- rbind(gwas.cov,c(1:length(gwas.cov)))
+gwas.cov <- rbind(gwas.cov,c(1:ncol(gwas.cov)))
 gwas.cov <- rbind(gwas.cov,as.numeric(chr.pos))
 gwas.cov.t <- as.data.frame(t(gwas.cov))
-gwas.cov.t$color[(gwas.cov.t$V3 %% 2) == 0] = "odd"
-gwas.cov.t$color[(gwas.cov.t$V3 %% 2) != 0] = "even"
-gwas.cov.t$color[gwas.cov.t$V1 > threshold] = "significant"
-ggplot(as.data.frame(gwas.cov.t),aes(x=V2, y=gwas.cov, col = factor(color))) + geom_point() + geom_hline(yintercept=threshold, linetype="dashed", color = "red")  + ggtitle("Manhattan plot") + xlab("Chromosome position") + theme(axis.text.x=element_blank(),axis.ticks.x=element_blank(),legend.position = "None") + ylab("-log10(p-value)")
+gwas.cov.t$color[(gwas.cov.t$V4 %% 2) == 0] = "odd"
+gwas.cov.t$color[(gwas.cov.t$V4 %% 2) != 0] = "even"
+gwas.cov.t$color[gwas.cov.t$V2 > threshold] = "significant"
+ggplot(as.data.frame(gwas.cov.t),aes(x=V3, y=V2, col = factor(color))) + geom_point() + geom_hline(yintercept=threshold, linetype="dashed", color = "red")  + ggtitle("Manhattan plot with covariates") + xlab("Chromosome position") + theme(axis.text.x=element_blank(),axis.ticks.x=element_blank(),legend.position = "None") + ylab("-log10(p-value)")
 
-#Compare.
-
+#Compare the results with and without covariates.
+print("We see that the GWAS with covariates have less significant values (3 vs 4 without covariates).")
 
 #Bonus: QQ plot.
 generated.p.values <- sort(-log10(ppoints(nrow(gwas.cov.t))))
-expected.p.values <- sort(gwas.cov.t$gwas.cov)
+expected.p.values <- sort(gwas.cov.t$V2)
 qq.data <- cbind(generated.p.values, expected.p.values)
-ggplot(as.data.frame(qq.data), aes(x=expected.p.values,y=generated.p.values)) + geom_point() + geom_abline() + ggtitle("QQ-plot") + xlab("Expected values") + ylab("Generated values")
+ggplot(as.data.frame(qq.data), aes(x=expected.p.values,y=generated.p.values)) + geom_point() + geom_abline() + ggtitle("QQ-plot") + xlab("Expected values (-log10 scale)") + ylab("Generated values (-log10 scale)")
